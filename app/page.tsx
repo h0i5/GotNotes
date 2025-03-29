@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Navbar from "@/app/components/Navbar";
 import { securityTopics } from "@/data/siteData";
-import AboutSection from "@/components/AboutSection";
+import AboutSection from "@/app/components/AboutSection";
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -17,13 +16,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen relative bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black text-white overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="clouds-1 absolute inset-0 opacity-10 bg-gradient-to-r from-purple-500/30 to-cyan-500/30 animate-cloud-drift-1"></div>
-        <div className="clouds-2 absolute inset-0 opacity-10 bg-gradient-to-r from-cyan-500/30 to-purple-500/30 animate-cloud-drift-2"></div>
-      </div>
+    <div className="min-h-screen relative  text-white overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden"></div>
       <div className="relative flex flex-col min-h-screen">
-        <Navbar />
         <main className="flex-1 flex flex-col items-center pt-32 pb-16 px-4 max-w-5xl mx-auto w-full">
           {/* Hero Section */}
           <div className="text-center mb-20 w-full">

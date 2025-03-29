@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Jost } from "next/font/google";
 import "./globals.css";
+import Navbar from "./components/Navbar";
 
 // Use Inter as the body font
 const inter = Inter({
@@ -29,7 +30,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${jost.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <head></head>
+      <body>
+        <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black min-h-screen text-white">
+          <Navbar />
+          <div className="max-w-7xl mx-auto flex flex-col">{children}</div>
+        </div>
+      </body>
     </html>
   );
 }
