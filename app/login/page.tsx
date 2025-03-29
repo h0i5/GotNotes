@@ -1,13 +1,10 @@
 "use client";
 
-import Navbar from "../components/Navbar";
 import { signInWithGoogle } from "./actions";
 
 export default function SignupPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black text-white">
-      <Navbar />
-
+    <div className=" text-white">
       <div className="grow flex items-start justify-center mt-[10vh]">
         <div className="bg-zinc-800/50 p-8 rounded-lg shadow-lg w-full max-w-md">
           <h1 className="text-3xl font-bold text-white mb-6 text-center">
@@ -17,7 +14,7 @@ export default function SignupPage() {
             <button
               formAction={signInWithGoogle}
               type="submit"
-              className="login-with-google-btn"
+              className="login-with-google-btn hover:cursor-pointer"
             >
               Sign in with Google
             </button>

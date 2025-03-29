@@ -10,7 +10,7 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Added loading state
   const supabase = createClient();
-  const pathName = usePathname(); // Initialize useRouter
+  const pathName = usePathname() || "/"; // Initialize useRouter
 
   useEffect(() => {
     async function fetchUser() {
@@ -60,7 +60,7 @@ export default function Navbar() {
             </button>
           )}
           <Link
-            href={user ? "/home" : "/signup"}
+            href={user ? "/home" : "/login"}
             className={
               user
                 ? "relative hover:opacity-80 transition-opacity"
