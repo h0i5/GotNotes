@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import { createClient } from "../utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { ClipLoader } from "react-spinners";
+import { usePathname } from "next/navigation";
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // Added loading state
   const supabase = createClient();
+  const pathName = usePathname(); // Initialize useRouter
 
   useEffect(() => {
     async function fetchUser() {
@@ -47,14 +49,16 @@ export default function Navbar() {
           </Link>
         </div>
         <div className="flex items-center gap-8">
-          <button
-            onClick={() => scrollToSection("about")}
-            className="relative font-medium group"
-          >
-            <span className="hidden md:flex hover:cursor-pointer transition transition-all-0.5s bg-clip-text text-transparent bg-gradient-to-r from-zinc-400 to-zinc-400 group-hover:from-purple-400 group-hover:to-cyan-400 transition-all duration-300">
-              About
-            </span>
-          </button>
+          {pathName === "/" && ( // Show About button only on "/"
+            <button
+              onClick={() => scrollToSection("about")}
+              className="relative font-medium group"
+            >
+              <span className="hidden md:flex hover:cursor-pointer transition transition-all-0.5s bg-clip-text text-transparent bg-gradient-to-r from-zinc-400 to-zinc-400 group-hover:from-purple-400 group-hover:to-cyan-400 transition-all duration-300">
+                About
+              </span>
+            </button>
+          )}
           <Link
             href={user ? "/home" : "/signup"}
             className={
@@ -71,7 +75,7 @@ export default function Navbar() {
                 alt={user.user_metadata.full_name}
                 width={32}
                 height={32}
-                className="rounded-full"
+                className="rounded-full border border-2 hover:border-2 hover:border-purple-400 transition-all duration-300 ease-out"
               />
             ) : (
               <>
