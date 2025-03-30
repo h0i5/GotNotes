@@ -10,7 +10,7 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-// Use Montserrat for headings
+// Use Jost for headings
 const jost = Jost({
   subsets: ["latin"],
   display: "swap",
@@ -25,16 +25,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en" className={`${inter.variable} ${jost.variable}`}>
-      <head></head>
-      <body>
-        <div className="min-h-screen bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black min-h-screen text-white">
+      <body className={`${inter.className} text-white min-h-screen`}>
+        <div className="min-h-screen flex flex-col bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black">
           <Navbar />
-          <div className="max-w-7xl mx-auto flex flex-col">{children}</div>
+          <main className="flex-grow">{children}</main>
         </div>
       </body>
     </html>

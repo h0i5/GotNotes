@@ -1,20 +1,24 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "../utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { ClipLoader } from "react-spinners";
 import { usePathname } from "next/navigation";
+
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // Added loading state
+  const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const supabase = createClient();
-  const pathName = usePathname() || "/"; // Initialize useRouter
+  const pathName = usePathname();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function fetchUser() {
-      setLoading(true); // Set loading to true when fetching user
+      setLoading(true);
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -23,75 +27,213 @@ export default function Navbar() {
         setUser(null);
       } else {
         setUser(user);
-        console.log("User:", user);
       }
-      setLoading(false); // Set loading to false after fetching user
+      setLoading(false);
     }
     fetchUser();
   }, [supabase]);
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    element?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setIsProfileOpen(false);
   };
 
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-lg px-6 py-3 mb-8">
-      <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex flex-row items-center gap-2">
-          <Image src="Logo.svg" alt="VibeSec" height="32" width="32" />
-          <Link
-            href="/"
-            className="text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-cyan-400 to-purple-400 bg-[200%_auto] hover:bg-[100%_auto] transition-all duration-500 cursor-pointer"
-          >
-            {" "}
-            GotNotes?
-          </Link>
-        </div>
-        <div className="flex items-center gap-8">
-          {pathName === "/" && ( // Show About button only on "/"
-            <button
-              onClick={() => scrollToSection("about")}
-              className="relative font-medium group"
-            >
-              <span className="hidden md:flex hover:cursor-pointer transition transition-all-0.5s bg-clip-text text-transparent bg-gradient-to-r from-zinc-400 to-zinc-400 group-hover:from-purple-400 group-hover:to-cyan-400 transition-all duration-300">
-                About
+    <nav className="bg-zinc-900/50 backdrop-blur-sm border-b border-zinc-800 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo and brand */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="flex items-center">
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
+                GotNotes?
               </span>
-            </button>
-          )}
-          <Link
-            href={user ? "/home" : "/login"}
-            className={
-              user
-                ? "relative hover:opacity-80 transition-opacity"
-                : "relative px-6 py-2 font-semibold text-white rounded-lg overflow-hidden group hover:cursor-pointer"
-            }
-          >
-            {loading ? ( // Show "Loading..." while loading
-              <ClipLoader color="#ffffff" size={12} />
-            ) : user ? (
-              <Image
-                src={user.user_metadata.picture.toString()}
-                alt={user.user_metadata.full_name}
-                width={32}
-                height={32}
-                className="rounded-full border border-2 hover:border-2 hover:border-purple-400 transition-all duration-300 ease-out"
-              />
+            </Link>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex md:items-center md:space-x-6">
+            {!loading ? (
+              user ? (
+                <>
+                  <Link
+                    href="/home"
+                    className={`text-zinc-300 hover:text-white transition-colors ${
+                      pathName === "/home" ? "text-white font-medium" : ""
+                    }`}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/colleges"
+                    className={`text-zinc-300 hover:text-white transition-colors ${
+                      pathName === "/colleges" ? "text-white font-medium" : ""
+                    }`}
+                  >
+                    Colleges
+                  </Link>
+                  
+                  {/* Profile Dropdown */}
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                      className="flex items-center focus:outline-none"
+                    >
+                      {user.user_metadata.avatar_url && (
+                        <Image
+                          src={user.user_metadata.avatar_url}
+                          alt="Profile"
+                          width={32}
+                          height={32}
+                          className="rounded-full hover:ring-2 hover:ring-purple-500 transition-all duration-200"
+                        />
+                      )}
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {isProfileOpen && (
+                      <div className="absolute right-0 mt-2 w-48 py-2 bg-zinc-900 rounded-xl border border-zinc-800 shadow-xl">
+                        <div className="px-4 py-2 border-b border-zinc-800">
+                          <p className="text-sm text-zinc-400">Signed in as</p>
+                          <p className="text-sm font-medium text-white truncate">
+                            {user.email}
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleSignOut}
+                          className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-white hover:bg-red-500/10 transition-colors"
+                        >
+                          Sign Out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-lg font-medium text-white transition-all duration-300 hover:cursor-pointer"
+                >
+                  Login
+                </Link>
+              )
             ) : (
-              <>
-                <span className="absolute inset-0 w-full h-full transition-all duration-300 ease-out translate-y-full bg-gradient-to-r from-purple-600 to-cyan-600 group-hover:translate-y-0"></span>
-                <span className="absolute inset-0 w-full h-full transition-all duration-300 ease-out bg-zinc-900 border border-zinc-700 rounded-lg group-hover:translate-y-[-100%]"></span>
-                <span className="absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out translate-y-full group-hover:translate-y-0 text-white">
-                  Get Started!
-                </span>
-                <span className="relative group-hover:translate-y-[-200%] transition-all duration-300 ease-out inline-block">
-                  Get Started
-                </span>
-              </>
+              <ClipLoader color="#a855f7" size={24} />
             )}
-          </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="inline-flex items-center justify-center p-2 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 focus:outline-none"
+            >
+              <svg
+                className="h-6 w-6"
+                stroke="currentColor"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                {isMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {isMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-zinc-900 border-t border-zinc-800">
+            {!loading ? (
+              user ? (
+                <>
+                  <Link
+                    href="/home"
+                    className={`block px-3 py-2 rounded-md text-base font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 ${
+                      pathName === "/home" ? "bg-zinc-800 text-white" : ""
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/colleges"
+                    className={`block px-3 py-2 rounded-md text-base font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 ${
+                      pathName === "/colleges" ? "bg-zinc-800 text-white" : ""
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Colleges
+                  </Link>
+                  <div className="px-3 py-2 flex items-center justify-between">
+                    <div className="flex items-center">
+                      {user.user_metadata.avatar_url && (
+                        <Image
+                          src={user.user_metadata.avatar_url}
+                          alt="Profile"
+                          width={32}
+                          height={32}
+                          className="rounded-full"
+                        />
+                      )}
+                      <span className="ml-3 text-sm text-zinc-400">{user.email}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-400 hover:text-white hover:bg-red-500"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-white bg-gradient-to-r from-purple-500 to-cyan-500"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )
+            ) : (
+              <div className="px-3 py-2">
+                <ClipLoader color="#a855f7" size={24} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
