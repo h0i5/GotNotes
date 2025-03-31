@@ -177,7 +177,7 @@ export default function Home() {
           ) : (
             <div className="mt-4 p-6 rounded-xl bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 shadow-xl">
               <p className="text-zinc-400">
-                You haven't joined a college yet.{" "}
+                You haven&apos;t joined a college yet.{" "}
                 <Link 
                   href="/colleges" 
                   className="text-purple-400 hover:text-purple-300 underline hover:cursor-pointer"

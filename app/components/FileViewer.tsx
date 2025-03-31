@@ -7,6 +7,7 @@ import PDFViewer from "./PDFViewer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Modal from "./Modal";
+import Image from 'next/image';
 
 interface Resource {
   id: string;
@@ -31,8 +32,6 @@ export default function FileViewer({ type, id }: FileViewerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const supabase = createClient();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -113,9 +112,6 @@ export default function FileViewer({ type, id }: FileViewerProps) {
     }
   };
 
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
-    setNumPages(numPages);
-  }
 
   if (loading) {
     return (
@@ -210,9 +206,11 @@ export default function FileViewer({ type, id }: FileViewerProps) {
           <PDFViewer url={fileUrl} />
         ) : isImage(fileExtension) ? (
           <div>
-            <img
+            <Image
               src={fileUrl}
               alt={resource.title}
+              width={800}
+              height={600}
               className="max-w-full h-auto rounded-lg"
             />
           </div>

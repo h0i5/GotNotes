@@ -36,7 +36,7 @@ export default function CourseList({ collegeId, refreshTrigger = 0 }: CourseList
 
   useEffect(() => {
     fetchCourses();
-  }, [collegeId, refreshTrigger]);
+  }, [collegeId, refreshTrigger, fetchCourses]);
 
   if (loading) {
     return (

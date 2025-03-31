@@ -5,8 +5,6 @@ import { createClient } from "@/app/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Modal from "@/app/components/Modal";
 import CollegeForm from "../components/CollegeForm";
-import CollegeList from "../components/CollegeList";
-import debounce from 'lodash/debounce';
 
 interface College {
   id: number;
@@ -15,10 +13,6 @@ interface College {
   created_at: string;
 } 
 
-interface UserCollege {
-  college_id: number;
-  college: College;
-}
 
 export default function CollegesPage() {
   const [user, setUser] = useState<User | null>(null);
@@ -33,7 +27,7 @@ export default function CollegesPage() {
   const COLLEGES_PER_PAGE = 12;
   const supabase = createClient();
 
-  const fetchColleges = async (query: string = '', pageNumber: number = 0) => {
+  const fetchColleges = useCallback(async (query: string = '', pageNumber: number = 0) => {
     try {
       setSearchLoading(true);
       let queryBuilder = supabase
@@ -50,7 +44,7 @@ export default function CollegesPage() {
       const to = from + COLLEGES_PER_PAGE - 1;
 
       const { data, count, error } = await queryBuilder
-        .order('id', { ascending: true }) // Order by id to ensure consistent pagination
+        .order('id', { ascending: true })
         .range(from, to);
 
       if (error) throw error;
@@ -59,7 +53,6 @@ export default function CollegesPage() {
       if (pageNumber === 0) {
         setColleges(data || []);
       } else {
-        // Only add colleges that aren't already in the list
         setColleges(prev => {
           const existingIds = new Set(prev.map(c => c.id));
           const newColleges = (data || []).filter(c => !existingIds.has(c.id));
@@ -74,16 +67,13 @@ export default function CollegesPage() {
     } finally {
       setSearchLoading(false);
     }
-  };
+  }, [supabase, COLLEGES_PER_PAGE]);
 
   // Debounced search function
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      setPage(0);
-      fetchColleges(query, 0);
-    }, 300),
-    []
-  );
+  const debouncedSearch = useCallback((query: string) => {
+    setPage(0);
+    fetchColleges(query, 0);
+  }, [fetchColleges]);
 
   useEffect(() => {
     const fetchUserAndColleges = async () => {
@@ -115,7 +105,7 @@ export default function CollegesPage() {
     };
 
     fetchUserAndColleges();
-  }, [supabase]);
+  }, [supabase, fetchColleges]);
 
   const handleLeaveCollege = async () => {
     try {

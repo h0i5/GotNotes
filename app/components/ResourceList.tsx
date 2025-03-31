@@ -45,7 +45,7 @@ export default function ResourceList({ type, courseId, refreshTrigger = 0 }: Res
     };
 
     fetchResources();
-  }, [courseId, type, refreshTrigger]);
+  }, [courseId, type, refreshTrigger, supabase]);
 
   const handleDownload = async (resource: Resource) => {
     try {

@@ -13,16 +13,16 @@ export async function GET(request: Request) {
     const supabase = await createClient();
 
     // Get signed URL for the file
-    const { data: { signedUrl }, error } = await supabase
+    const { data, error } = await supabase
       .storage
       .from('notes')
       .createSignedUrl(filePath, 60); // URL valid for 60 seconds
 
-    if (error || !signedUrl) {
+    if (error || !data) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ url: signedUrl }, { status: 200 });
+    return NextResponse.json({ url: data.signedUrl }, { status: 200 });
   } catch (error) {
     console.error("Error downloading file:", error);
     return NextResponse.json(
