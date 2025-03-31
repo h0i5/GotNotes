@@ -10,8 +10,18 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error, data: { user } } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('first_name')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.first_name) {
+        return NextResponse.redirect(new URL('/profile/complete', origin));
+      }
+
       const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === "development";
       if (isLocalEnv) {

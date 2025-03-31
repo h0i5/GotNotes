@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   //add lh3.googleusercontent.com as allowed image domain
   images: {
     domains: [
+      process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', '') || '',
       "lh3.googleusercontent.com",
       "cdn.discordapp.com",
       "avatars.githubusercontent.com",

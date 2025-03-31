@@ -7,6 +7,7 @@ import Modal from "@/app/components/Modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import ResourceUploadForm from "@/app/components/ResourceUploadForm";
 import ResourceList from "@/app/components/ResourceList";
+import Link from "next/link";
 
 interface Course {
   id: number;
@@ -107,6 +108,19 @@ export default function CoursePage({ params }: PageProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <div className="bg-zinc-900/50 backdrop-blur-sm p-8 rounded-2xl border border-zinc-800/50 shadow-xl">
+        <nav className="flex items-center gap-2 text-sm mb-6">
+          <Link 
+            href="/home" 
+            className="text-zinc-400 hover:text-purple-400 transition-colors"
+          >
+            Home
+          </Link>
+          <span className="text-zinc-600">/</span>
+          <span className="text-zinc-300">
+            {course?.title}
+          </span>
+        </nav>
+
         <div className="flex justify-between items-start mb-8">
           <div>
             <h1 className="text-3xl font-bold text-white mb-4">{course.title}</h1>

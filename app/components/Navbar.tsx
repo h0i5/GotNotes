@@ -99,7 +99,7 @@ export default function Navbar() {
                           alt="Profile"
                           width={32}
                           height={32}
-                          className="rounded-full hover:ring-2 hover:ring-purple-500 transition-all duration-200"
+                          className="hover:cursor-pointer rounded-full hover:ring-2 hover:ring-purple-500 transition-all duration-200"
                         />
                       )}
                     </button>
@@ -113,6 +113,13 @@ export default function Navbar() {
                             {user.email}
                           </p>
                         </div>
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors"
+                          onClick={() => setIsProfileOpen(false)}
+                        >
+                          Your Profile
+                        </Link>
                         <button
                           onClick={handleSignOut}
                           className="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-white hover:bg-red-500/10 transition-colors"

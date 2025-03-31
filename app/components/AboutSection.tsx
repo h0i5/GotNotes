@@ -68,7 +68,7 @@ export default function AboutSection() {
                   <div className="flex justify-between items-center p-4 bg-purple-500/10 rounded-lg border border-purple-500/20 relative group overflow-hidden hover:border-purple-500/40 transition-colors duration-300">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <span className="text-purple-400 relative">
-                      College Resources
+                      College Resources & PYQs
                     </span>
                     <span className="text-sm text-purple-400 relative">
                       Institution Specific
@@ -76,9 +76,9 @@ export default function AboutSection() {
                   </div>
                   <div className="flex justify-between items-center p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/20 relative group overflow-hidden hover:border-cyan-500/40 transition-colors duration-300">
                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/10 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <span className="text-cyan-400 relative">Past Papers</span>
+                    <span className="text-cyan-400 relative">College Forum Discussions</span>
                     <span className="text-sm text-cyan-400 relative">
-                      By Department & Year
+                      Open to all
                     </span>
                   </div>
                 </div>

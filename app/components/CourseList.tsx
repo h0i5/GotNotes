@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/app/utils/supabase/client";
 
 interface Course {
   id: number;
@@ -13,30 +14,36 @@ interface Course {
 
 interface CourseListProps {
   collegeId: number;
-  refreshTrigger?: number;
+  refreshTrigger: number;
 }
 
-export default function CourseList({ collegeId, refreshTrigger = 0 }: CourseListProps) {
+export default function CourseList({ collegeId, refreshTrigger }: CourseListProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-
-  const fetchCourses = async () => {
-    try {
-      const response = await fetch(`/api/courses/list?college_id=${collegeId}`);
-      if (!response.ok) throw new Error("Failed to fetch courses");
-      const data = await response.json();
-      setCourses(data);
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const supabase = createClient();
 
   useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('courses')
+          .select('*')
+          .eq('college_id', collegeId)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setCourses(data || []);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCourses();
-  }, [collegeId, refreshTrigger, fetchCourses]);
+  }, [collegeId, refreshTrigger]); // Only fetch when collegeId changes or when refreshTrigger updates
 
   if (loading) {
     return (

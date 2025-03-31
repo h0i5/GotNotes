@@ -1,22 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useDeferredValue } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Modal from "@/app/components/Modal";
 import CollegeForm from "../components/CollegeForm";
+import { useRouter } from "next/navigation";
+import { redirect } from "next/navigation";
 
 interface College {
-  id: number;
+  id: string;
   name: string;
   description: string;
   created_at: string;
 } 
 
+interface UserProfile {
+  college_id: string;
+  college?: {
+    name: string;
+    description: string;
+  };
+}
 
-export default function CollegesPage() {
+export default function Colleges() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [userCollege, setUserCollege] = useState<College | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -26,86 +36,80 @@ export default function CollegesPage() {
   const [hasMore, setHasMore] = useState(true);
   const COLLEGES_PER_PAGE = 12;
   const supabase = createClient();
+  const deferredSearch = useDeferredValue(searchQuery);
+
+  // Separate user fetch effect
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) {
+          redirect("/");
+          return;
+        }
+        setUser(user);
+
+        // Get user's profile data with college details
+        const { data: profileData } = await supabase
+          .from('users')
+          .select(`
+            college_id,
+            college:college_id (
+              name,
+              description
+            )
+          `)
+          .eq('id', user.id)
+          .single();
+
+        setUserProfile(profileData as unknown as UserProfile);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error:', error);
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [supabase]);
 
   const fetchColleges = useCallback(async (query: string = '', pageNumber: number = 0) => {
     try {
       setSearchLoading(true);
       let queryBuilder = supabase
         .from('college')
-        .select('*', { count: 'exact' });
+        .select('*', { count: 'exact' })
+        .range(pageNumber * COLLEGES_PER_PAGE, (pageNumber + 1) * COLLEGES_PER_PAGE - 1);
 
       // Add search condition if query exists
-      if (query) {
-        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+      if (deferredSearch) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${deferredSearch}%,description.ilike.%${deferredSearch}%`);
       }
 
-      // Add pagination
-      const from = pageNumber * COLLEGES_PER_PAGE;
-      const to = from + COLLEGES_PER_PAGE - 1;
-
-      const { data, count, error } = await queryBuilder
-        .order('id', { ascending: true })
-        .range(from, to);
+      const { data, count, error } = await queryBuilder;
 
       if (error) throw error;
 
-      // Update colleges list
       if (pageNumber === 0) {
         setColleges(data || []);
       } else {
-        setColleges(prev => {
-          const existingIds = new Set(prev.map(c => c.id));
-          const newColleges = (data || []).filter(c => !existingIds.has(c.id));
-          return [...prev, ...newColleges];
-        });
+        setColleges(prev => [...prev, ...(data || [])]);
       }
 
-      // Update hasMore flag
-      setHasMore(count ? from + COLLEGES_PER_PAGE < count : false);
+      setHasMore(Boolean(count && count > (pageNumber + 1) * COLLEGES_PER_PAGE));
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setSearchLoading(false);
     }
-  }, [supabase, COLLEGES_PER_PAGE]);
+  }, [supabase, deferredSearch, COLLEGES_PER_PAGE]);
 
-  // Debounced search function
-  const debouncedSearch = useCallback((query: string) => {
-    setPage(0);
-    fetchColleges(query, 0);
-  }, [fetchColleges]);
-
+  // Effect for search
   useEffect(() => {
-    const fetchUserAndColleges = async () => {
-      try {
-        // Get user data
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError) throw userError;
-        setUser(user);
-
-        // Get user's college
-        const { data: userData, error: userCollegeError } = await supabase
-          .from('users')
-          .select('college_id, colleges:college(*)')
-          .eq('id', user?.id)
-          .single();
-
-        if (!userCollegeError && userData?.colleges) {
-          console.log(userData.colleges);
-          setUserCollege(userData.colleges as unknown as College);
-        }
-
-        // Get initial colleges
-        await fetchColleges();
-      } catch (error) {
-        console.error('Error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserAndColleges();
-  }, [supabase, fetchColleges]);
+    setPage(0);
+    fetchColleges(deferredSearch, 0);
+  }, [deferredSearch, fetchColleges]);
 
   const handleLeaveCollege = async () => {
     try {
@@ -115,7 +119,7 @@ export default function CollegesPage() {
         .eq('id', user?.id);
 
       if (error) throw error;
-      setUserCollege(null);
+      setUserProfile(null);
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to leave college');
@@ -126,7 +130,6 @@ export default function CollegesPage() {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    debouncedSearch(query);
   };
 
   // Handle load more
@@ -156,16 +159,16 @@ export default function CollegesPage() {
           </p>
         </div>
 
-        {userCollege ? (
+        {userProfile ? (
           <div className="mb-12 p-6 rounded-xl bg-purple-500/5 border border-purple-500/20 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-white mb-1">Your Current College</h2>
-                <p className="text-purple-400 font-medium">{userCollege.name}</p>
+                <p className="text-purple-400 font-medium">{userProfile.college?.name}</p>
               </div>
               <button
                 onClick={handleLeaveCollege}
-                className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300 hover:cursor-pointer"
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
               >
                 Leave College
               </button>
@@ -229,15 +232,15 @@ export default function CollegesPage() {
               <div
                 key={college.id}
                 className={`p-6 rounded-xl backdrop-blur-sm border transition-all duration-300 ${
-                  userCollege?.id === college.id
+                  userProfile?.college_id === college.id
                     ? 'bg-purple-500/5 border-purple-500/20'
                     : 'bg-zinc-900/50 border-zinc-800/50 hover:border-zinc-700/50'
                 }`}
               >
                 <h3 className="text-xl font-semibold text-white mb-2">{college.name}</h3>
                 <p className="text-zinc-400 mb-4">{college.description}</p>
-                {userCollege ? (
-                  userCollege.id === college.id ? (
+                {userProfile ? (
+                  userProfile.college_id === college.id ? (
                     <div className="flex items-center gap-2 text-purple-400">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -262,10 +265,19 @@ export default function CollegesPage() {
                           .eq('id', user?.id);
 
                         if (error) throw error;
-                        setUserCollege(college);
+                        setUserProfile({
+                          college_id: college.id,
+                          college: {
+                            name: college.name,
+                            description: college.description
+                          }
+                        });
                       } catch (error) {
                         console.error('Error:', error);
                         alert('Failed to join college');
+                      }
+                      finally {
+                        router.push("/home");
                       }
                     }}
                     className="w-full px-4 py-2 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 hover:cursor-pointer"
