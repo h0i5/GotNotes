@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { useRouter } from "next/navigation";
-
+import toast from 'react-hot-toast';
 export default function CompleteProfile() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isProfileComplete, setIsProfileComplete] = useState(false);
   const [username, setUsername] = useState<string>("");
   const [step, setStep] = useState(1);
   const router = useRouter();
@@ -26,17 +25,7 @@ export default function CompleteProfile() {
       setUsername(user.email?.split('@')[0] || '');
 
       // Only check if profile exists for initial signup
-      if (window.location.pathname === '/profile/complete') {
-        const { data } = await supabase
-          .from('users')
-          .select('first_name')
-          .eq('id', user.id)
-          .single();
-
-        if (data?.first_name) {
-          router.push('/home');
-        }
-      }
+      
     };
 
     checkProfile();
@@ -60,12 +49,13 @@ export default function CompleteProfile() {
         .eq('id', user.id);
 
       if (error) throw error;
-      router.push('/home');
     } catch (error) {
       console.error('Error:', error);
       alert('Failed to update profile');
     } finally {
       setLoading(false);
+      router.push('/home');
+      toast.success('Profile updated successfully');
     }
   };
 
@@ -76,7 +66,6 @@ export default function CompleteProfile() {
     }
   };
 
-  if (isProfileComplete) return null;
 
   return (
     <div className="mt-12 flex items-center justify-center p-4">

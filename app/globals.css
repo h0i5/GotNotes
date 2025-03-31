@@ -98,3 +98,7 @@ body {
     cursor: not-allowed;
   }
 }
+
+button:hover {
+  cursor: pointer;
+}

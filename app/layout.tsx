@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Jost } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import { Toaster } from 'react-hot-toast';
 
 // Use Inter as the body font
 const inter = Inter({
@@ -35,6 +36,22 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-grow">{children}</main>
         </div>
+        <Toaster 
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: '#18181b',
+              color: '#fff',
+              border: '1px solid rgba(63, 63, 70, 0.5)',
+            },
+            success: {
+              iconTheme: {
+                primary: '#a855f7',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
       </body>
     </html>
   );

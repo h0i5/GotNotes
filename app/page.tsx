@@ -4,9 +4,20 @@ import { useState, useEffect } from "react";
 import { securityTopics } from "@/data/siteData";
 import AboutSection from "@/app/components/AboutSection";
 import Link from "next/link";
+import { createClient } from "./utils/supabase/client";
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+    };
+    checkAuth();
+  }, [supabase]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -17,7 +28,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen relative  text-white overflow-hidden">
+    <div className="min-h-screen relative text-white overflow-hidden">
       <div className="absolute inset-0 overflow-hidden"></div>
       <div className="relative flex flex-col min-h-screen">
         <main className="flex-1 flex flex-col items-center pt-32 pb-16 px-4 max-w-5xl mx-auto w-full">
@@ -48,16 +59,24 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              <span className="font-bold"></span>
             </h1>
 
-            <div className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto font-light">
+            <div className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto font-light mb-8">
               No notes? No problem!
               <br className="hidden md:block" />
               <p className="italic text-purple-400">
                 Made by students for students.
               </p>
             </div>
+
+            {!isLoggedIn && (
+              <Link
+                href="/login"
+                className="inline-flex px-8 py-3 bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-lg font-medium text-white transition-all duration-300 transform hover:scale-[1.02]"
+              >
+                Get Started!
+              </Link>
+            )}
           </div>
 
           {/* About Section */}
@@ -78,10 +97,10 @@ export default function Home() {
                   Join your college community to access shared resources and collaborate with peers.
                 </p>
                 <Link
-                  href="/colleges"
+                  href={isLoggedIn ? "/colleges" : "/login"}
                   className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 text-center"
                 >
-                  Find Your College
+                  {isLoggedIn ? "Find Your College" : "Get Started"}
                 </Link>
               </div>
             </div>
@@ -99,10 +118,10 @@ export default function Home() {
                   Share notes, papers, and discuss with your classmates in real-time.
                 </p>
                 <Link
-                  href="/colleges"
+                  href={isLoggedIn ? "/colleges" : "/login"}
                   className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 text-center"
                 >
-                  Get Started
+                  {isLoggedIn ? "Get Started" : "Join Now"}
                 </Link>
               </div>
             </div>

@@ -6,8 +6,10 @@ import { createClient } from "../utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { ClipLoader } from "react-spinners";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -47,6 +49,7 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    router.push("/");
     setUser(null);
     setIsProfileOpen(false);
   };

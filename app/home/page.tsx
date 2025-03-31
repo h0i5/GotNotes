@@ -10,6 +10,7 @@ import CourseList from "../components/CourseList";
 import Modal from "../components/Modal";
 import Forum from "../components/Forum";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
+import toast from 'react-hot-toast';
 
 interface College {
   id: number;
@@ -84,12 +85,11 @@ export default function Home() {
         throw new Error('Failed to leave college');
       }
 
-      // Update local state
       setCollege(null);
-      alert('Successfully left the college');
+      toast.success('Successfully left the college');
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to leave college');
+      toast.error('Failed to leave college');
     }
   };
 
@@ -124,7 +124,7 @@ export default function Home() {
                   <div className="sm:flex sm:items-start">
                     <button
                       onClick={handleLeaveCollege}
-                      className="w-full sm:w-auto px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
+                      className="hover:cursor-pointer w-full sm:w-auto px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
                     >
                       Leave College
                     </button>

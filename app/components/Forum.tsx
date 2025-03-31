@@ -3,17 +3,14 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { formatDistanceToNow } from "date-fns";
 
 interface Message {
   id: string;
   message: string;
   created_at: string;
   user_id: string;
-  users: {
-    first_name: string;
-    last_name: string;
-  };
+  first_name: string;
+  last_name: string;
 }
 
 interface ForumProps {
@@ -36,12 +33,6 @@ export default function Forum({ collegeId }: ForumProps) {
   };
 
   // Scroll to bottom on initial load
-  useEffect(() => {
-    const messageContainer = messagesEndRef.current?.parentElement;
-    if (messageContainer) {
-      messageContainer.scrollTop = messageContainer.scrollHeight;
-    }
-  }, [messages]);
 
   useEffect(() => {
     const fetchMessagesAndUser = async () => {
@@ -53,16 +44,10 @@ export default function Forum({ collegeId }: ForumProps) {
         }
         setUser(currentUser);
 
-        // Then fetch messages
+        // Then fetch messages - simplified query
         const { data: messages, error } = await supabase
           .from('messages')
-          .select(`
-            *,
-            users:user_id (
-              first_name,
-              last_name
-            )
-          `)
+          .select('*')
           .eq('college_id', collegeId)
           .order('created_at', { ascending: true });
 
@@ -72,7 +57,6 @@ export default function Forum({ collegeId }: ForumProps) {
         }
 
         setMessages(messages || []);
-        scrollToBottom();
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -82,7 +66,7 @@ export default function Forum({ collegeId }: ForumProps) {
 
     fetchMessagesAndUser();
 
-    // Set up realtime subscription
+    // Update realtime subscription
     const channel = supabase
       .channel('public:messages')
       .on(
@@ -94,33 +78,8 @@ export default function Forum({ collegeId }: ForumProps) {
           filter: `college_id=eq.${collegeId}`,
         },
         async (payload) => {
-          // Fetch the complete message with user details
-          const { data: messageWithUser, error } = await supabase
-            .from('messages')
-            .select(`
-              *,
-              users:user_id (
-                first_name,
-                last_name
-              )
-            `)
-            .eq('id', payload.new.id)
-            .single();
-
-          if (error) {
-            console.error('Error fetching new message:', error);
-            return;
-          }
-
-          // Check if message already exists in state
-          setMessages(prev => {
-            const messageExists = prev.some(msg => msg.id === messageWithUser.id);
-            if (messageExists) {
-              return prev;
-            }
-            return [...prev, messageWithUser];
-          });
-          scrollToBottom();
+          // No need to fetch user details separately
+          setMessages(prev => [...prev, payload.new as Message]);
         }
       )
       .subscribe();
@@ -131,7 +90,6 @@ export default function Forum({ collegeId }: ForumProps) {
   }, [collegeId, supabase]);
 
   useEffect(() => {
-    scrollToBottom();
   }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,17 +112,20 @@ export default function Forum({ collegeId }: ForumProps) {
           message: newMessage.trim(),
           college_id: collegeId,
           user_id: user.id,
+          first_name: userData?.first_name,
+          last_name: userData?.last_name
         })
         .select()
         .single();
 
       if (error) throw error;
-
+      
       // Add the new message to local state immediately
       if (newMessageData) {
         const messageWithUser = {
           ...newMessageData,
-          users: userData
+          first_name: userData?.first_name,
+          last_name: userData?.last_name
         };
         
         // Check if message already exists before adding
@@ -175,8 +136,8 @@ export default function Forum({ collegeId }: ForumProps) {
           }
           return [...prev, messageWithUser];
         });
-        scrollToBottom();
       }
+
 
       setNewMessage("");
     } catch (error) {
@@ -184,6 +145,8 @@ export default function Forum({ collegeId }: ForumProps) {
       alert('Failed to send message');
     } finally {
       setSending(false);
+      scrollToBottom();
+
     }
   };
 
@@ -250,6 +213,7 @@ export default function Forum({ collegeId }: ForumProps) {
     <div className="flex flex-col h-[600px]">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto mb-4 space-y-3 p-4 bg-black/20 rounded-lg scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+        {messages.length == 0 ? <h1>No one is here... </h1>: <></>}
         {messages.map((message) => (
           <div
             key={message.id}
@@ -259,7 +223,7 @@ export default function Forum({ collegeId }: ForumProps) {
           >
             {/* Sender's name */}
             <span className="text-xs text-zinc-500 mb-1 px-2">
-              {message.user_id === user?.id ? 'You' : `${message.users.first_name} ${message.users.last_name}`}
+              {message.user_id === user?.id ? 'You' : `${message.first_name} ${message.last_name}`}
             </span>
 
             {/* Message bubble */}

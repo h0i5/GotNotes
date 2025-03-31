@@ -7,6 +7,7 @@ import Modal from "@/app/components/Modal";
 import CollegeForm from "../components/CollegeForm";
 import { useRouter } from "next/navigation";
 import { redirect } from "next/navigation";
+import toast from 'react-hot-toast';
 
 interface College {
   id: string;
@@ -83,8 +84,8 @@ export default function Colleges() {
         .range(pageNumber * COLLEGES_PER_PAGE, (pageNumber + 1) * COLLEGES_PER_PAGE - 1);
 
       // Add search condition if query exists
-      if (deferredSearch) {
-        queryBuilder = queryBuilder.or(`name.ilike.%${deferredSearch}%,description.ilike.%${deferredSearch}%`);
+      if (query) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
       }
 
       const { data, count, error } = await queryBuilder;
@@ -103,7 +104,7 @@ export default function Colleges() {
     } finally {
       setSearchLoading(false);
     }
-  }, [supabase, deferredSearch, COLLEGES_PER_PAGE]);
+  }, [supabase, COLLEGES_PER_PAGE]);
 
   // Effect for search
   useEffect(() => {
@@ -120,9 +121,33 @@ export default function Colleges() {
 
       if (error) throw error;
       setUserProfile(null);
+      toast.success('Successfully left the college');
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to leave college');
+      toast.error('Failed to leave college');
+    }
+  };
+
+  const handleJoinCollege = async (college: College) => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ college_id: college.id })
+        .eq('id', user?.id);
+
+      if (error) throw error;
+      setUserProfile({
+        college_id: college.id,
+        college: {
+          name: college.name,
+          description: college.description
+        }
+      });
+      toast.success(`Successfully joined ${college.name}`);
+      router.push("/home");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to join college');
     }
   };
 
@@ -162,16 +187,26 @@ export default function Colleges() {
         {userProfile ? (
           <div className="mb-12 p-6 rounded-xl bg-purple-500/5 border border-purple-500/20 backdrop-blur-sm">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-white mb-1">Your Current College</h2>
-                <p className="text-purple-400 font-medium">{userProfile.college?.name}</p>
-              </div>
-              <button
-                onClick={handleLeaveCollege}
-                className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
-              >
-                Leave College
-              </button>
+              {userProfile.college_id ? (
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-1">Your Current College</h2>
+                  <p className="text-purple-400 font-medium">{userProfile.college?.name}</p>
+                  <p className="text-zinc-400 font-medium">{userProfile.college?.description}</p>
+                </div>
+              ) : (
+                <div>
+                  <h2 className="text-xl font-semibold text-white mb-1">Not Part of Any College</h2>
+                  <p className="text-zinc-400">Join a college below to access shared resources and collaborate with peers.</p>
+                </div>
+              )}
+              {userProfile.college_id && (
+                <button
+                  onClick={handleLeaveCollege}
+                  className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
+                >
+                  Leave College
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -240,46 +275,33 @@ export default function Colleges() {
                 <h3 className="text-xl font-semibold text-white mb-2">{college.name}</h3>
                 <p className="text-zinc-400 mb-4">{college.description}</p>
                 {userProfile ? (
-                  userProfile.college_id === college.id ? (
-                    <div className="flex items-center gap-2 text-purple-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-sm font-medium">Current Member</span>
-                    </div>
+                  userProfile.college_id ? (
+                    userProfile.college_id === college.id ? (
+                      <div className="flex items-center gap-2 text-purple-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-sm font-medium">Current Member</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-zinc-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                        <span className="text-sm">Leave current college to join</span>
+                      </div>
+                    )
                   ) : (
-                    <div className="flex items-center gap-2 text-zinc-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
-                      </svg>
-                      <span className="text-sm">Leave current college to join</span>
-                    </div>
+                    <button
+                      onClick={() => handleJoinCollege(college)}
+                      className="w-full px-4 py-2 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 hover:cursor-pointer"
+                    >
+                      Join College
+                    </button>
                   )
                 ) : (
                   <button
-                    onClick={async () => {
-                      try {
-                        const { error } = await supabase
-                          .from('users')
-                          .update({ college_id: college.id })
-                          .eq('id', user?.id);
-
-                        if (error) throw error;
-                        setUserProfile({
-                          college_id: college.id,
-                          college: {
-                            name: college.name,
-                            description: college.description
-                          }
-                        });
-                      } catch (error) {
-                        console.error('Error:', error);
-                        alert('Failed to join college');
-                      }
-                      finally {
-                        router.push("/home");
-                      }
-                    }}
+                    onClick={() => handleJoinCollege(college)}
                     className="w-full px-4 py-2 bg-purple-500/10 hover:bg-purple-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 hover:cursor-pointer"
                   >
                     Join College

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/app/utils/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
 interface Course {
   id: number;
@@ -10,6 +11,7 @@ interface Course {
   description: string;
   college_id: number;
   created_at: string;
+  created_by: string;
 }
 
 interface CourseListProps {
@@ -43,7 +45,7 @@ export default function CourseList({ collegeId, refreshTrigger }: CourseListProp
     };
 
     fetchCourses();
-  }, [collegeId, refreshTrigger]); // Only fetch when collegeId changes or when refreshTrigger updates
+  }, [collegeId, refreshTrigger, supabase]); // Only fetch when collegeId changes or when refreshTrigger updates
 
   if (loading) {
     return (
@@ -78,7 +80,10 @@ export default function CourseList({ collegeId, refreshTrigger }: CourseListProp
           <h3 className="text-xl font-semibold mb-2 text-white group-hover:text-purple-400 transition-colors">
             {course.title}
           </h3>
-          <p className="text-zinc-400 line-clamp-2">{course.description}</p>
+          <p className="text-zinc-400 line-clamp-2 mb-2">{course.description}</p>
+          <p className="text-sm text-zinc-500">
+            Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}
+          </p>
         </div>
       ))}
     </div>

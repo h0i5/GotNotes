@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { use, useEffect, useState } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Modal from "@/app/components/Modal";
@@ -15,6 +15,7 @@ interface Course {
   description: string;
   college_id: number;
   created_at: string;
+  created_by: string;
 }
 
 interface PageProps {
@@ -32,30 +33,39 @@ export default function CoursePage({ params }: PageProps) {
   const [isUploadingPaper, setIsUploadingPaper] = useState(false);
   const [refreshNotes, setRefreshNotes] = useState(0);
   const [refreshPapers, setRefreshPapers] = useState(0);
+  const [isCreator, setIsCreator] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
-    const fetchCourse = async () => {
+    const fetchCourseAndCheckCreator = async () => {
       try {
-        const { data, error } = await supabase
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Fetch course
+        const { data: course, error } = await supabase
           .from('courses')
           .select('*')
           .eq('id', id)
           .single();
 
         if (error) throw error;
-        setCourse(data);
+        if (!course) return;
+
+        setCourse(course);
+        // Check if current user is the creator
+        setIsCreator(user.id === course.created_by);
       } catch (error) {
         console.error('Error:', error);
-        router.push('/home');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCourse();
-  }, [id, router, supabase]);
+    fetchCourseAndCheckCreator();
+  }, [id, supabase]);
 
   const handleDelete = async () => {
     if (!course) return;
@@ -126,18 +136,20 @@ export default function CoursePage({ params }: PageProps) {
             <h1 className="text-3xl font-bold text-white mb-4">{course.title}</h1>
             <p className="text-zinc-400">{course.description}</p>
           </div>
-          <button
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300 hover:cursor-pointer"
-          >
-            Delete Course
-          </button>
+          {isCreator && (
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
+            >
+              Delete Course
+            </button>
+          )}
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger className="hover:cursor-pointer hover:bg-zinc-800/50 transition-all duration-300 mx-2" value="notes">Notes</TabsTrigger>
-            <TabsTrigger className="hover:cursor-pointer hover:bg-zinc-800/50 transition-all duration-300 mx-2" value="papers">Previous Papers</TabsTrigger>
+            <TabsTrigger className="hover:cursor-pointer hover:bg-zinc-800/50 transition-all duration-300 1" value="notes">Notes</TabsTrigger>
+            <TabsTrigger className="hover:cursor-pointer hover:bg-zinc-800/50 transition-all duration-300 " value="papers">Previous Papers</TabsTrigger>
           </TabsList>
           <TabsContent value="notes">
             <div className="flex justify-between items-center mb-6">
