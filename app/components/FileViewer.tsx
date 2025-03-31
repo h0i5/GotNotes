@@ -5,6 +5,8 @@ import { createClient } from "@/app/utils/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import PDFViewer from "./PDFViewer";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Modal from "./Modal";
 
 interface Resource {
   id: string;
@@ -32,6 +34,9 @@ export default function FileViewer({ type, id }: FileViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const supabase = createClient();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const router = useRouter();
 
   const getFileExtension = (filename: string) => {
     return filename.split('.').pop()?.toLowerCase() || '';
@@ -48,20 +53,26 @@ export default function FileViewer({ type, id }: FileViewerProps) {
   useEffect(() => {
     const fetchResource = async () => {
       try {
-        const { data, error } = await supabase
+        // First get the resource details including file_path
+        const { data: resource, error: resourceError } = await supabase
           .from(type === 'note' ? 'notes' : 'papers')
           .select('*, course:courses(*)')
           .eq('id', id)
           .single();
 
-        if (error) throw error;
-        setResource(data);
+        if (resourceError) throw resourceError;
+        if (!resource) throw new Error('Resource not found');
+        setResource(resource);
 
-        // Get file URL
-        const response = await fetch(`/api/${type}s/download?path=${data.file_path}`);
-        if (!response.ok) throw new Error('Failed to get download URL');
-        const { url } = await response.json();
-        setFileUrl(url);
+        // Then get the download URL using the file_path
+        if (resource.file_path) {
+          const response = await fetch(`/api/${type}s/download?path=${resource.file_path}`);
+          if (!response.ok) throw new Error('Failed to get download URL');
+          const { url } = await response.json();
+          setFileUrl(url);
+        } else {
+          throw new Error('No file path found');
+        }
       } catch (error) {
         console.error('Error:', error);
         setError('Failed to load resource');
@@ -76,6 +87,30 @@ export default function FileViewer({ type, id }: FileViewerProps) {
   const handleDownload = async () => {
     if (!resource || !fileUrl) return;
     window.open(fileUrl, '_blank');
+  };
+
+  const handleDelete = async () => {
+    setDeleteLoading(true);
+    try {
+      const response = await fetch(`/api/${type}s/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: id,
+          file_path: resource?.file_path
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to delete');
+      router.push(`/course/${resource?.course.id}`);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Failed to delete resource');
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
@@ -122,38 +157,51 @@ export default function FileViewer({ type, id }: FileViewerProps) {
           </Link>
           <span className="text-zinc-600">/</span>
           <span className="text-zinc-300">
-            {resource.title}
+            {type === 'paper' ? 'Previous Year Paper: ' : ''}{resource.title}
           </span>
         </nav>
         
         <div className="flex justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">{resource.title}</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">
+              {type === 'paper' ? 'Previous Year Paper: ' : ''}{resource.title}
+            </h1>
             <p className="text-zinc-400 mb-2">{resource.description}</p>
             <p className="text-zinc-500 text-sm">
               Uploaded {formatDistanceToNow(new Date(resource.uploadedat))} ago
             </p>
           </div>
-          <button
-            onClick={handleDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-lg font-medium text-white transition-all duration-300 whitespace-nowrap"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Download
-          </button>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
+            <button
+              onClick={handleDownload}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-lg font-medium text-white transition-all duration-300 whitespace-nowrap"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
+              </svg>
+              Download
+            </button>
+          </div>
         </div>
       </div>
 
@@ -190,6 +238,37 @@ export default function FileViewer({ type, id }: FileViewerProps) {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title={`Delete ${type === 'paper' ? 'Previous Year Paper' : 'Note'}`}
+      >
+        <div className="space-y-4">
+          <p className="text-zinc-400">
+            Are you sure you want to delete this {type}? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 rounded-lg font-medium text-zinc-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              className="px-4 py-2 bg-red-500/10 hover:bg-red-500 border border-red-500/50 hover:border-transparent rounded-lg font-medium text-red-400 hover:text-white transition-all duration-300 disabled:opacity-50 flex items-center gap-2"
+            >
+              {deleteLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+              ) : (
+                'Delete'
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 } 

@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Modal from "@/app/components/Modal";
 import CollegeForm from "../components/CollegeForm";
 import CollegeList from "../components/CollegeList";
+import debounce from 'lodash/debounce';
 
 interface College {
   id: number;
@@ -24,8 +25,65 @@ export default function CollegesPage() {
   const [userCollege, setUserCollege] = useState<College | null>(null);
   const [colleges, setColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const COLLEGES_PER_PAGE = 12;
   const supabase = createClient();
+
+  const fetchColleges = async (query: string = '', pageNumber: number = 0) => {
+    try {
+      setSearchLoading(true);
+      let queryBuilder = supabase
+        .from('college')
+        .select('*', { count: 'exact' });
+
+      // Add search condition if query exists
+      if (query) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${query}%,description.ilike.%${query}%`);
+      }
+
+      // Add pagination
+      const from = pageNumber * COLLEGES_PER_PAGE;
+      const to = from + COLLEGES_PER_PAGE - 1;
+
+      const { data, count, error } = await queryBuilder
+        .order('id', { ascending: true }) // Order by id to ensure consistent pagination
+        .range(from, to);
+
+      if (error) throw error;
+
+      // Update colleges list
+      if (pageNumber === 0) {
+        setColleges(data || []);
+      } else {
+        // Only add colleges that aren't already in the list
+        setColleges(prev => {
+          const existingIds = new Set(prev.map(c => c.id));
+          const newColleges = (data || []).filter(c => !existingIds.has(c.id));
+          return [...prev, ...newColleges];
+        });
+      }
+
+      // Update hasMore flag
+      setHasMore(count ? from + COLLEGES_PER_PAGE < count : false);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      setPage(0);
+      fetchColleges(query, 0);
+    }, 300),
+    []
+  );
 
   useEffect(() => {
     const fetchUserAndColleges = async () => {
@@ -38,22 +96,17 @@ export default function CollegesPage() {
         // Get user's college
         const { data: userData, error: userCollegeError } = await supabase
           .from('users')
-          .select('college_id, college:courses(*)')
+          .select('college_id, colleges:college(*)')
           .eq('id', user?.id)
           .single();
 
-        if (!userCollegeError && userData?.college) {
-          setUserCollege(userData.college[0] as College);
+        if (!userCollegeError && userData?.colleges) {
+          console.log(userData.colleges);
+          setUserCollege(userData.colleges as unknown as College);
         }
 
-        // Get all colleges
-        const { data: collegesData, error: collegesError } = await supabase
-          .from('courses')
-          .select('*')
-          .order('name');
-
-        if (collegesError) throw collegesError;
-        setColleges(collegesData || []);
+        // Get initial colleges
+        await fetchColleges();
       } catch (error) {
         console.error('Error:', error);
       } finally {
@@ -77,6 +130,20 @@ export default function CollegesPage() {
       console.error('Error:', error);
       alert('Failed to leave college');
     }
+  };
+
+  // Handle search input changes
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    debouncedSearch(query);
+  };
+
+  // Handle load more
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchColleges(searchQuery, nextPage);
   };
 
   if (loading) {
@@ -132,7 +199,41 @@ export default function CollegesPage() {
         )}
 
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-6">Available Colleges</h2>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <h2 className="text-2xl font-bold text-white">Available Colleges</h2>
+            <div className="w-full sm:w-auto flex-1 sm:max-w-md">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search for your college..."
+                  className="w-full p-3 pl-10 rounded-lg bg-black/30 border border-zinc-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all outline-none text-white placeholder:text-zinc-500"
+                />
+                {searchLoading ? (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
+                  </div>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {colleges.map((college) => (
               <div
@@ -155,8 +256,8 @@ export default function CollegesPage() {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-zinc-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H8" />
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m-4 6H4m0 0l4 4m-4-4l4-4" />
                       </svg>
                       <span className="text-sm">Leave current college to join</span>
                     </div>
@@ -185,6 +286,17 @@ export default function CollegesPage() {
               </div>
             ))}
           </div>
+
+          {hasMore && (
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={handleLoadMore}
+                className="hover:cursor-pointer px-6 py-3 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300"
+              >
+                Load More
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Create College Modal */}
@@ -194,7 +306,10 @@ export default function CollegesPage() {
             onClose={() => setIsCreateModalOpen(false)}
             title="Create New College"
           >
-            <CollegeForm onSuccess={() => setIsCreateModalOpen(false)} />
+            <CollegeForm onSuccess={() => {
+              setIsCreateModalOpen(false);
+              fetchColleges();
+            }} />
           </Modal>
         )}
       </div>

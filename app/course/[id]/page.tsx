@@ -120,13 +120,12 @@ export default function CoursePage({ params }: PageProps) {
           </button>
         </div>
 
-        <Tabs defaultValue="notes" className="mt-8">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="notes">Notes</TabsTrigger>
-            <TabsTrigger value="papers">Previous Year Papers</TabsTrigger>
+        <Tabs defaultValue="notes" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger className="hover:cursor-pointer hover:bg-zinc-800/50 transition-all duration-300 mx-2" value="notes">Notes</TabsTrigger>
+            <TabsTrigger className="hover:cursor-pointer hover:bg-zinc-800/50 transition-all duration-300 mx-2" value="papers">Previous Papers</TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="notes" className="space-y-6">
+          <TabsContent value="notes">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-white">Course Notes</h2>
               <button
@@ -139,10 +138,9 @@ export default function CoursePage({ params }: PageProps) {
                 Upload Note
               </button>
             </div>
-            <ResourceList type="note" courseId={course.id} refreshTrigger={refreshNotes} />
+            <ResourceList type="note" courseId={id} refreshTrigger={refreshNotes} />
           </TabsContent>
-
-          <TabsContent value="papers" className="space-y-6">
+          <TabsContent value="papers">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-white">Previous Year Papers</h2>
               <button
@@ -155,7 +153,7 @@ export default function CoursePage({ params }: PageProps) {
                 Upload Paper
               </button>
             </div>
-            <ResourceList type="paper" courseId={course.id} refreshTrigger={refreshPapers} />
+            <ResourceList type="paper" courseId={id} refreshTrigger={refreshPapers} />
           </TabsContent>
         </Tabs>
       </div>
@@ -168,7 +166,7 @@ export default function CoursePage({ params }: PageProps) {
       >
         <ResourceUploadForm
           type="note"
-          courseId={course.id}
+          courseId={id}
           onSuccess={() => {
             setRefreshNotes(prev => prev + 1);
             setIsUploadingNote(false);
@@ -185,7 +183,7 @@ export default function CoursePage({ params }: PageProps) {
       >
         <ResourceUploadForm
           type="paper"
-          courseId={course.id}
+          courseId={id}
           onSuccess={() => {
             setRefreshPapers(prev => prev + 1);
             setIsUploadingPaper(false);

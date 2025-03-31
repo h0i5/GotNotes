@@ -40,8 +40,14 @@ export default function CourseList({ collegeId, refreshTrigger = 0 }: CourseList
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="p-6 rounded-xl bg-black/30 border border-zinc-800 animate-pulse">
+            <div className="h-6 bg-zinc-800 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-zinc-800 rounded w-full mb-2"></div>
+            <div className="h-4 bg-zinc-800 rounded w-2/3"></div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -55,7 +61,7 @@ export default function CourseList({ collegeId, refreshTrigger = 0 }: CourseList
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {courses.map((course) => (
         <div
           key={course.id}

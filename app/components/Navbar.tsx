@@ -58,6 +58,7 @@ export default function Navbar() {
           {/* Logo and brand */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
+              <Image src="/Logo.svg" className="w-9 h-9 mr-2" alt="Logo" width={32} height={32} />
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400">
                 GotNotes?
               </span>
