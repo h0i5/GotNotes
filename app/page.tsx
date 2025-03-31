@@ -11,7 +11,7 @@ export default function Home() {
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((current) => (current + 1) % securityTopics.length);
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
