@@ -3,8 +3,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { useCurrentUserImage } from "@/hooks/use-current-user-image";
-import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { useRealtimePresenceRoom } from "@/hooks/use-realtime-presence-room";
 import Image from "next/image";
 
@@ -17,12 +15,6 @@ interface Message {
   last_name: string;
 }
 
-interface ActiveUser {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  roll_number: string | null;
-}
 
 interface ForumProps {
   collegeId: number;
