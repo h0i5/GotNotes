@@ -3,6 +3,10 @@
 import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/app/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { useCurrentUserImage } from "@/hooks/use-current-user-image";
+import { useCurrentUserName } from "@/hooks/use-current-user-name";
+import { useRealtimePresenceRoom } from "@/hooks/use-realtime-presence-room";
+import Image from "next/image";
 
 interface Message {
   id: string;
@@ -30,7 +34,8 @@ export default function Forum({ collegeId }: ForumProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
+  const { users } = useRealtimePresenceRoom(`college:${collegeId}`);
+  const activeUsers = Object.values(users);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -100,51 +105,6 @@ export default function Forum({ collegeId }: ForumProps) {
       supabase.removeChannel(channel);
     };
   }, [collegeId, supabase]);
-
-  useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel>;
-
-    const setupPresence = async () => {
-      if (!user?.id) return;
-
-      channel = supabase.channel('online-users')
-        .on('presence', { event: 'sync' }, async () => {
-          const newState = channel.presenceState();
-          const presenceUsers = Object.values(newState).flat() as unknown as { id: string }[];
-          
-          // Get user IDs from presence
-          const userIds = presenceUsers.map(u => u.id);
-          
-          // Fetch user details from users table
-          const { data: userDetails } = await supabase
-            .from('users')
-            .select('id, first_name, last_name')
-            .in('id', userIds);
-
-          setActiveUsers(userDetails as ActiveUser[] || []);
-        })
-        .subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            // Track presence with a heartbeat
-            await channel.track({
-              id: user.id,
-              timestamp: new Date().toISOString()
-            });
-          }
-        });
-    };
-
-    setupPresence();
-
-    return () => {
-      if (channel) {
-        // Ensure we untrack before cleanup
-        channel.untrack()
-          .then(() => channel.unsubscribe())
-          .catch(console.error);
-      }
-    };
-  }, [user?.id, supabase]); // Only re-run if user ID changes
 
   useEffect(() => {
   }, [messages]);
@@ -254,25 +214,55 @@ export default function Forum({ collegeId }: ForumProps) {
   return (
     <div className="flex flex-col h-[600px]">
       <div className="flex justify-end mb-2 px-4">
-        <div className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <p className="text-xs text-zinc-400">
-            {activeUsers.length} active {activeUsers.length === 1 ? 'user' : 'users'}
-          </p>
-          <div className="relative group">
-            <button className="text-zinc-400 hover:text-white transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
-            <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 rounded-lg border border-zinc-800 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="p-2">
-                {activeUsers.map(user => (
-                  <div key={user.id} className="px-3 py-1 text-sm text-zinc-400">
-                    {user.first_name} {user.last_name} <span className="text-xs text-zinc-500"> {user.roll_number}</span>
+        <div className="flex items-center gap-4 bg-black/20 px-3 py-1.5 rounded-lg">
+          {/* Stacked Avatars */}
+          <div className="flex -space-x-2">
+            {activeUsers.slice(0, 3).map((user, i) => (
+              <div
+                key={i}
+                className="relative rounded-full border-2 border-zinc-900 overflow-hidden w-8 h-8"
+                style={{ zIndex: activeUsers.length - i }}
+              >
+                {user.image ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-xs">
+                    {user.name.charAt(0)}
                   </div>
+                )}
+              </div>
+            ))}
+            {activeUsers.length > 3 && (
+              <div className="relative w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-900 flex items-center justify-center text-xs text-zinc-400">
+                +{activeUsers.length - 3}
+              </div>
+            )}
+          </div>
 
-                ))}
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <p className="text-xs text-zinc-400">
+              {activeUsers.length} active
+            </p>
+            <div className="relative group">
+              <button className="text-zinc-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 rounded-lg border border-zinc-800 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="p-2">
+                  {activeUsers.map((user, i) => (
+                    <div key={i} className="px-3 py-1 text-sm text-zinc-400">
+                      {user.name}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
