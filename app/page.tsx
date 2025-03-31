@@ -65,7 +65,7 @@ export default function Home() {
               No notes? No problem!
               <br className="hidden md:block" />
               <p className="italic text-purple-400">
-                Made by students for students.
+                Made by a student for students.
               </p>
             </div>
 

@@ -12,6 +12,7 @@ interface UserProfile {
   email: string;
   college: {
     name: string;
+    description: string;
   } | null;
 }
 
@@ -39,7 +40,8 @@ export default function Profile() {
             roll_number,
             email,
             college:college (
-              name
+              name,
+              description
             )
           `)
           .eq('id', user?.id)
@@ -94,6 +96,8 @@ export default function Profile() {
           <div>
             <h2 className="text-sm font-medium text-zinc-400">College</h2>
             <p className="text-white mt-1">{profile?.college?.name || 'Not joined any college yet'}</p>
+            <p className="text-zinc-400 ">{profile?.college?.description}</p>
+
           </div>
         </div>
       </div>

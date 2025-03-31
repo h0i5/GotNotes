@@ -13,6 +13,13 @@ interface Message {
   last_name: string;
 }
 
+interface ActiveUser {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  roll_number: string | null;
+}
+
 interface ForumProps {
   collegeId: number;
 }
@@ -23,6 +30,7 @@ export default function Forum({ collegeId }: ForumProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -78,8 +86,12 @@ export default function Forum({ collegeId }: ForumProps) {
           filter: `college_id=eq.${collegeId}`,
         },
         async (payload) => {
-          // No need to fetch user details separately
-          setMessages(prev => [...prev, payload.new as Message]);
+          // Only add message if it doesn't exist already
+          setMessages(prev => {
+            const messageExists = prev.some(msg => msg.id === payload.new.id);
+            if (messageExists) return prev;
+            return [...prev, payload.new as Message];
+          });
         }
       )
       .subscribe();
@@ -88,6 +100,51 @@ export default function Forum({ collegeId }: ForumProps) {
       supabase.removeChannel(channel);
     };
   }, [collegeId, supabase]);
+
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel>;
+
+    const setupPresence = async () => {
+      if (!user?.id) return;
+
+      channel = supabase.channel('online-users')
+        .on('presence', { event: 'sync' }, async () => {
+          const newState = channel.presenceState();
+          const presenceUsers = Object.values(newState).flat() as unknown as { id: string }[];
+          
+          // Get user IDs from presence
+          const userIds = presenceUsers.map(u => u.id);
+          
+          // Fetch user details from users table
+          const { data: userDetails } = await supabase
+            .from('users')
+            .select('id, first_name, last_name')
+            .in('id', userIds);
+
+          setActiveUsers(userDetails as ActiveUser[] || []);
+        })
+        .subscribe(async (status) => {
+          if (status === 'SUBSCRIBED') {
+            // Track presence with a heartbeat
+            await channel.track({
+              id: user.id,
+              timestamp: new Date().toISOString()
+            });
+          }
+        });
+    };
+
+    setupPresence();
+
+    return () => {
+      if (channel) {
+        // Ensure we untrack before cleanup
+        channel.untrack()
+          .then(() => channel.unsubscribe())
+          .catch(console.error);
+      }
+    };
+  }, [user?.id, supabase]); // Only re-run if user ID changes
 
   useEffect(() => {
   }, [messages]);
@@ -101,44 +158,30 @@ export default function Forum({ collegeId }: ForumProps) {
       // Get user details first
       const { data: userData } = await supabase
         .from('users')
-        .select('first_name, last_name')
+        .select('first_name, last_name, roll_number')
         .eq('id', user.id)
         .single();
 
       // Insert the message
-      const { data: newMessageData, error } = await supabase
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           message: newMessage.trim(),
           college_id: collegeId,
           user_id: user.id,
           first_name: userData?.first_name,
-          last_name: userData?.last_name
+          last_name: userData?.last_name,
+          roll_number: userData?.roll_number
         })
         .select()
         .single();
 
       if (error) throw error;
-      
-      // Add the new message to local state immediately
-      if (newMessageData) {
-        const messageWithUser = {
-          ...newMessageData,
-          first_name: userData?.first_name,
-          last_name: userData?.last_name
-        };
-        
-        // Check if message already exists before adding
-        setMessages(prev => {
-          const messageExists = prev.some(msg => msg.id === messageWithUser.id);
-          if (messageExists) {
-            return prev;
-          }
-          return [...prev, messageWithUser];
-        });
-      }
 
+      console.log(data);
 
+      // Clear input immediately but don't add message to state
+      // (it will come through the realtime subscription)
       setNewMessage("");
     } catch (error) {
       console.error('Error sending message:', error);
@@ -146,7 +189,6 @@ export default function Forum({ collegeId }: ForumProps) {
     } finally {
       setSending(false);
       scrollToBottom();
-
     }
   };
 
@@ -211,6 +253,31 @@ export default function Forum({ collegeId }: ForumProps) {
 
   return (
     <div className="flex flex-col h-[600px]">
+      <div className="flex justify-end mb-2 px-4">
+        <div className="flex items-center gap-2 bg-black/20 px-3 py-1.5 rounded-lg">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <p className="text-xs text-zinc-400">
+            {activeUsers.length} active {activeUsers.length === 1 ? 'user' : 'users'}
+          </p>
+          <div className="relative group">
+            <button className="text-zinc-400 hover:text-white transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </button>
+            <div className="absolute right-0 top-full mt-2 w-48 bg-zinc-900 rounded-lg border border-zinc-800 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="p-2">
+                {activeUsers.map(user => (
+                  <div key={user.id} className="px-3 py-1 text-sm text-zinc-400">
+                    {user.first_name} {user.last_name} <span className="text-xs text-zinc-500"> {user.roll_number}</span>
+                  </div>
+
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto mb-4 space-y-3 p-4 bg-black/20 rounded-lg scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
         {messages.length == 0 ? <h1>No one is here... </h1>: <></>}

@@ -12,6 +12,10 @@ interface Course {
   college_id: number;
   created_at: string;
   created_by: string;
+  creator: {
+    first_name: string;
+    last_name: string;
+  };
 }
 
 interface CourseListProps {
@@ -31,7 +35,13 @@ export default function CourseList({ collegeId, refreshTrigger }: CourseListProp
         setLoading(true);
         const { data, error } = await supabase
           .from('courses')
-          .select('*')
+          .select(`
+            *,
+            creator:users!created_by (
+              first_name,
+              last_name
+            )
+          `)
           .eq('college_id', collegeId)
           .order('created_at', { ascending: false });
 
@@ -81,9 +91,14 @@ export default function CourseList({ collegeId, refreshTrigger }: CourseListProp
             {course.title}
           </h3>
           <p className="text-zinc-400 line-clamp-2 mb-2">{course.description}</p>
-          <p className="text-sm text-zinc-500">
-            Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}
-          </p>
+          <div className="flex justify-between items-center text-sm">
+            <p className="text-zinc-500">
+              Created {formatDistanceToNow(new Date(course.created_at), { addSuffix: true })}
+            </p>
+            <p className="text-zinc-400">
+              by {course.creator?.first_name} {course.creator?.last_name}
+            </p>
+          </div>
         </div>
       ))}
     </div>
