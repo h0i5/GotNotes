@@ -15,6 +15,7 @@ interface UserProfile {
   } | null;
 }
 
+
 export default function Profile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,13 +38,15 @@ export default function Profile() {
             last_name,
             roll_number,
             email,
-            college:college(name)
+            college:college (
+              name
+            )
           `)
-          .eq('id', user.id)
+          .eq('id', user?.id)
           .single();
 
         if (error) throw error;
-        setProfile(data);
+        setProfile(data as unknown as UserProfile);
       } catch (error) {
         console.error('Error:', error);
       } finally {
