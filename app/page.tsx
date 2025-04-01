@@ -65,7 +65,7 @@ export default function Home() {
               College centric notes and papers sharing platform.
               <br className="hidden md:block" />
               <p className="italic text-zinc-400 mt-4">
-                  Answering the infamous question every college students asks in each semester. <span className=" text-purple-400">Got Notes?</span>
+                  Answering the infamous question every college students asks each semester. <span className=" text-purple-400">Got Notes?</span>
               </p>
             </div>
 

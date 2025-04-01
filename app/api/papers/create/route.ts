@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const { title, description, course_id } = await request.json();
+    const { title, description, course_id, file_path } = await request.json();
     const supabase = await createClient();
 
     // Get current user
@@ -32,6 +32,7 @@ export async function POST(request: Request) {
         college_id: userData.college_id,
         course_id,
         user_id: user.id,
+        file_path,
         uploadedat: new Date().toISOString(),
         updatedat: new Date().toISOString()
       }])
