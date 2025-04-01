@@ -62,10 +62,10 @@ export default function Home() {
             </h1>
 
             <div className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto font-light mb-8">
-              No notes? No problem!
+              College centric notes and papers sharing platform.
               <br className="hidden md:block" />
-              <p className="italic text-purple-400">
-                Made by a student for students.
+              <p className="italic text-zinc-400 mt-4">
+                  Answering the infamous question every college students asks in each semester. <span className=" text-purple-400">Got Notes?</span>
               </p>
             </div>
 

@@ -11,6 +11,7 @@ import Modal from "../components/Modal";
 import Forum from "../components/Forum";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import toast from 'react-hot-toast';
+import CourseUploadMenu from "../components/CourseUploadMenu";
 
 interface College {
   id: number;
@@ -102,8 +103,10 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <div className="max-w-7xl mx-auto flex flex-col p-6">
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        
+        
         <div className="text-start flex flex-col space-y-8">
           <h1 className="mb-8 text-4xl font-bold mb-2">
             Welcome,{" "}
@@ -159,17 +162,10 @@ export default function Home() {
                       <div className="flex-1">
                         <h2 className="text-2xl font-semibold text-zinc-200">Available Courses</h2>
                       </div>
-                      <div className="sm:flex sm:items-start">
-                        <button
-                          onClick={() => setIsModalOpen(true)}
-                          className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 flex items-center justify-center sm:justify-start gap-2"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                          </svg>
-                          Add Course
-                        </button>
-                      </div>
+                      <CourseUploadMenu 
+                        onAddCourse={() => setIsModalOpen(true)} 
+                        onCoursesCreated={() => setRefreshCourses(prev => prev + 1)}
+                      />
                     </div>
                     <CourseList 
                       collegeId={college.id} 

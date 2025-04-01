@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import toast from 'react-hot-toast';
-import { supabase } from "@/lib/supabase";
 
 interface CourseFormProps {
   collegeId: number;
@@ -20,11 +19,17 @@ export default function CourseForm({ collegeId, onSuccess, onCourseCreated }: Co
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('courses')
-        .insert([{ title, description, college_id: collegeId }]);
+      const response = await fetch("/api/courses/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          title, 
+          description, 
+          college_id: collegeId 
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to create course');
 
       // Clear form
       setTitle("");
