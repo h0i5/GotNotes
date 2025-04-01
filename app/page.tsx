@@ -5,6 +5,7 @@ import { securityTopics } from "@/data/siteData";
 import AboutSection from "@/app/components/AboutSection";
 import Link from "next/link";
 import { createClient } from "./utils/supabase/client";
+import { Github } from "lucide-react";
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -62,7 +63,7 @@ export default function Home() {
             </h1>
 
             <div className="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto font-light mb-8">
-              College centric notes and papers sharing platform.
+              College centric notes and resources sharing platform.
               <br className="hidden md:block" />
               <p className="italic text-zinc-400 mt-4">
                   Answering the infamous question every college students asks each semester. <span className=" text-purple-400">Got Notes?</span>
@@ -128,6 +129,26 @@ export default function Home() {
           </div>
 
         </main>
+
+        {/* Add this footer section before the closing div */}
+        <footer className="mt-4 pb-4">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-500">
+              <p className="text-sm text-zinc-400 hover:text-white transition-colors">
+                © {new Date().getFullYear()} GotNotes. All rights reserved.
+              </p>
+              <a
+                href="https://github.com/h0i5/gotnotes"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                <Github className="h-4 w-4" />
+                <span>GitHub!</span>
+              </a>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
