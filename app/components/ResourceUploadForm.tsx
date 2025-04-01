@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/app/utils/supabase/client";
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone';
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload';
 import toast from 'react-hot-toast';

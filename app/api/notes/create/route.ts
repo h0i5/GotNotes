@@ -37,6 +37,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ data });
   } catch (error) {
+    console.error('Error creating note:', error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
