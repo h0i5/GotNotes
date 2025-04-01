@@ -21,9 +21,10 @@ interface Course {
 interface CourseListProps {
   collegeId: number;
   refreshTrigger: number;
+  searchQuery: string;
 }
 
-export default function CourseList({ collegeId, refreshTrigger }: CourseListProps) {
+export default function CourseList({ collegeId, refreshTrigger, searchQuery }: CourseListProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -57,6 +58,16 @@ export default function CourseList({ collegeId, refreshTrigger }: CourseListProp
     fetchCourses();
   }, [collegeId, refreshTrigger, supabase]); // Only fetch when collegeId changes or when refreshTrigger updates
 
+  const filteredCourses = courses.filter(course => {
+    if (!searchQuery) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      course.title.toLowerCase().includes(query) ||
+      course.description.toLowerCase().includes(query)
+    );
+  });
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -71,17 +82,21 @@ export default function CourseList({ collegeId, refreshTrigger }: CourseListProp
     );
   }
 
-  if (courses.length === 0) {
+  if (filteredCourses.length === 0) {
     return (
       <div className="text-center py-12 text-zinc-400">
-        <p>No courses available yet. Be the first to create one!</p>
+        {searchQuery ? (
+          <p>No courses found matching your search.</p>
+        ) : (
+          <p>No courses available yet. Be the first to create one!</p>
+        )}
       </div>
     );
   }
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {courses.map((course) => (
+      {filteredCourses.map((course) => (
         <div
           key={course.id}
           onClick={() => router.push(`/course/${course.id}`)}

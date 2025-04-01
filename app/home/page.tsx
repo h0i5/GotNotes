@@ -30,6 +30,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [refreshCourses, setRefreshCourses] = useState(0);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const supabase = createClient();
 
   useEffect(() => {
@@ -160,16 +161,32 @@ export default function Home() {
                   <TabsContent value="courses" className="mt-0">
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                       <div className="flex-1">
-                        <h2 className="text-2xl font-semibold text-zinc-200">Available Courses</h2>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search courses..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full p-2 pr-10 rounded-lg bg-black/30 border border-zinc-700 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all outline-none text-white hover:border-purple-500"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                          </div>
+                        </div>
                       </div>
-                      <CourseUploadMenu 
-                        onAddCourse={() => setIsModalOpen(true)} 
-                        onCoursesCreated={() => setRefreshCourses(prev => prev + 1)}
-                      />
+                      <div className="flex justify-end">
+                        <CourseUploadMenu 
+                          onAddCourse={() => setIsModalOpen(true)} 
+                          onCoursesCreated={() => setRefreshCourses(prev => prev + 1)}
+                        />
+                      </div>
                     </div>
                     <CourseList 
                       collegeId={college.id} 
                       refreshTrigger={refreshCourses}
+                      searchQuery={searchQuery}
                     />
                   </TabsContent>
 
