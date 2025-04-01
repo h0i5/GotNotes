@@ -131,7 +131,6 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-
               <div className="bg-zinc-900/50 backdrop-blur-sm p-8 rounded-2xl border border-zinc-800/50 shadow-xl">
                 <Tabs defaultValue="courses" className="w-full">
                   <TabsList className="grid w-full grid-cols-2 mb-8">
