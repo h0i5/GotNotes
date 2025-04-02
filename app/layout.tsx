@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
 import { Inter, Jost } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 
 // Use Inter as the body font
 const inter = Inter({
@@ -32,22 +33,23 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jost.variable}`}>
       <body className={`${inter.className} text-white min-h-screen`}>
+        <Analytics />
         <div className="min-h-screen flex flex-col bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black">
           <Navbar />
           <main className="flex-grow">{children}</main>
         </div>
-        <Toaster 
+        <Toaster
           position="bottom-right"
           toastOptions={{
             style: {
-              background: '#18181b',
-              color: '#fff',
-              border: '1px solid rgba(63, 63, 70, 0.5)',
+              background: "#18181b",
+              color: "#fff",
+              border: "1px solid rgba(63, 63, 70, 0.5)",
             },
             success: {
               iconTheme: {
-                primary: '#a855f7',
-                secondary: '#fff',
+                primary: "#a855f7",
+                secondary: "#fff",
               },
             },
           }}
