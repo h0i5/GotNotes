@@ -5,12 +5,38 @@ import { securityTopics } from "@/data/siteData";
 import AboutSection from "@/app/components/AboutSection";
 import Link from "next/link";
 import { createClient } from "./utils/supabase/client";
-import {  Gitlab } from "lucide-react";
+import { Gitlab } from "lucide-react";
+import Image from "next/image";
+import ImageModal from "@/app/components/ImageModal";
+
+const showcaseImages = [
+  {
+    src: "/screenshots/Dashboard.jpg",
+    alt: "Dashboard",
+    title: "Modern Dashboard",
+    description: "Clean and intuitive interface for managing your courses and resources."
+  },
+  {
+    src: "/screenshots/Notes.jpg",
+    alt: "Notes View",
+    title: "Notes Management",
+    description: "Easy-to-use notes organization and sharing system."
+  },
+  {
+    src: "/screenshots/PYQ.jpg",
+    alt: "Previous Year Question Papers",
+    title: "Previous Year Question Papers",
+    description: "Access previous year question papers for your courses."
+  },
+ 
+];
 
 export default function Home() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const supabase = createClient();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageAlt, setSelectedImageAlt] = useState<string>("");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -79,12 +105,14 @@ export default function Home() {
               </Link>
             )}
           </div>
-
+          
+        </main>
           {/* About Section */}
           <AboutSection />
 
+          
           {/* College Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 mx-[10%]">
             {/* Your College Section */}
             <div className="p-6 rounded-xl bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 shadow-xl">
               <div className="flex flex-col gap-4">
@@ -108,8 +136,8 @@ export default function Home() {
 
             {/* Study Together Section */}
             <div className="p-6 rounded-xl bg-zinc-900/50 backdrop-blur-sm border border-zinc-800/50 shadow-xl">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-4 h-full">
+                <div className="flex items-center gap-3 h-full">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -120,7 +148,7 @@ export default function Home() {
                 </p>
                 <Link
                   href={isLoggedIn ? "/colleges" : "/login"}
-                  className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 text-center"
+                  className="mt-auto w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-purple-500/10 to-cyan-500/10 hover:from-purple-500 hover:to-cyan-500 border border-purple-500/50 hover:border-transparent rounded-lg font-medium text-purple-400 hover:text-white transition-all duration-300 text-center"
                 >
                   {isLoggedIn ? "Get Started" : "Join Now"}
                 </Link>
@@ -128,7 +156,54 @@ export default function Home() {
             </div>
           </div>
 
-        </main>
+
+         {/* Add this showcase section before the footer */}
+         <section className="py-20">
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+              Everything you need to
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-cyan-400 ml-2">
+                ace your semester
+              </span>
+            </h2>
+            <p className="text-zinc-400 text-center mb-12 max-w-2xl mx-auto">
+              From course materials to previous year papers, GotNotes has got you covered!
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {showcaseImages.map((image, index) => (
+                <div
+                  key={image.title}
+                  className="group relative bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-zinc-800/50 overflow-hidden transition-all duration-300 hover:border-purple-500/50"
+                >
+                  <div 
+                    className="relative h-48 sm:h-56 md:h-64 cursor-pointer overflow-hidden"
+                    onClick={() => {
+                      setSelectedImage(image.src);
+                      setSelectedImageAlt(image.alt);
+                    }}
+                  >
+                    <Image
+                      src={image.src}
+                      alt={image.alt}
+                      fill
+                      className="object-cover transform transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-2 text-white group-hover:text-purple-400 transition-colors">
+                      {image.title}
+                    </h3>
+                    <p className="text-sm sm:text-base text-zinc-400">
+                      {image.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
 
         {/* Add this footer section before the closing div */}
         <footer className="mt-4 pb-4">
@@ -150,6 +225,15 @@ export default function Home() {
           </div>
         </footer>
       </div>
+      
+
+      {/* Add the ImageModal component */}
+      <ImageModal
+        isOpen={!!selectedImage}
+        onClose={() => setSelectedImage(null)}
+        src={selectedImage || ""}
+        alt={selectedImageAlt}
+      />
     </div>
   );
 }
