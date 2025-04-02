@@ -194,9 +194,17 @@ export default function Colleges() {
                   <p className="text-zinc-400 font-medium">{userProfile.college?.description}</p>
                 </div>
               ) : (
-                <div>
-                  <h2 className="text-xl font-semibold text-white mb-1">Not Part of Any College</h2>
-                  <p className="text-zinc-400">Join a college below to access shared resources and collaborate with peers.</p>
+                <div className="w-full flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white mb-1">Not Part of Any College</h2>
+                    <p className="text-zinc-400">Join a college below to access shared resources and collaborate with peers.</p>
+                  </div>
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-cyan-500 hover:from-purple-600 hover:to-cyan-600 rounded-lg font-medium text-white transition-all duration-300 whitespace-nowrap hover:cursor-pointer"
+                  >
+                    Create College
+                  </button>
                 </div>
               )}
               {userProfile.college_id && (

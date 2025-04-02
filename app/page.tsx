@@ -133,11 +133,11 @@ export default function Home() {
         {/* Add this footer section before the closing div */}
         <footer className="mt-4 pb-4">
           <div className="max-w-7xl mx-auto px-4">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-purple-500">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2 border-t border-purple-500">
               <p className="text-sm text-zinc-400 hover:text-white transition-colors">
                 © {new Date().getFullYear()} GotNotes. All rights reserved.
               </p>
-              <a
+              {/* <a
                 href="https://github.com/h0i5/gotnotes"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -145,7 +145,7 @@ export default function Home() {
               >
                 <Github className="h-4 w-4" />
                 <span>GitHub!</span>
-              </a>
+              </a> */}
             </div>
           </div>
         </footer>
