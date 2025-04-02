@@ -171,7 +171,7 @@ export default function Home() {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {showcaseImages.map((image, index) => (
+              {showcaseImages.map((image) => (
                 <div
                   key={image.title}
                   className="group relative bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-zinc-800/50 overflow-hidden transition-all duration-300 hover:border-purple-500/50"
