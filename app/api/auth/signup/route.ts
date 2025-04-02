@@ -9,7 +9,7 @@ export async function POST() {
       provider: "google",
       options: {
         redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-        queryParams: { access_type: "offline", prompt: "consent" },
+        queryParams: { access_type: "offline", prompt: "consent", next: "/profile/complete" },
       },
     });
 

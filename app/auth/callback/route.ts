@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
       if (!profile?.first_name) {
         return NextResponse.redirect(new URL('/profile/complete', origin));
-      }
+        }
 
       const forwardedHost = request.headers.get("x-forwarded-host"); // original origin before load balancer
       const isLocalEnv = process.env.NODE_ENV === "development";

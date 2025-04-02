@@ -5,7 +5,7 @@ import { securityTopics } from "@/data/siteData";
 import AboutSection from "@/app/components/AboutSection";
 import Link from "next/link";
 import { createClient } from "./utils/supabase/client";
-import { Gitlab } from "lucide-react";
+import { Github } from "lucide-react";
 import Image from "next/image";
 import ImageModal from "@/app/components/ImageModal";
 
@@ -218,7 +218,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
               >
-                <Gitlab className="h-4 w-4" />
+                <Github className="h-4 w-4" />
                 <span>Source Code!</span>
               </a>
             </div>
