@@ -42,8 +42,14 @@ export default function RootLayout({
           name="twitter:description"
           content="Answering the infamous question every college student asks each semester. Got Notes?"
         />
-        <meta name="twitter:image" content="/screenshots/Landing.jpg" />
-        <meta name="og:image" content="/screenshots/Landing.jpg" />
+        <meta
+          name="twitter:image"
+          content="https://gotnotes.harshiyer.in/screenshots/Landing.jpg"
+        />
+        <meta
+          name="og:image"
+          content="https://gotnotes.harshiyer.in/screenshots/Landing.jpg"
+        />
         <meta name="og:url" content="https://gotnotes.harshiyer.in" />
       </head>
       <body className={`${inter.className} text-white min-h-screen`}>
