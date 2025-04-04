@@ -32,6 +32,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable} ${jost.variable}`}>
+      <head>
+        <meta
+          name="twitter:card"
+          content="GotNotes? - Answering the infamous question"
+        />
+        <meta name="twitter:title" content="GotNotes?" />
+        <meta
+          name="twitter:description"
+          content="Answering the infamous question every college student asks each semester. Got Notes?"
+        />
+        <meta name="twitter:image" content="/screenshots/Landing.jpg" />
+      </head>
       <body className={`${inter.className} text-white min-h-screen`}>
         <Analytics />
         <div className="min-h-screen flex flex-col bg-gradient-to-b from-zinc-900 via-purple-900/20 to-black">
