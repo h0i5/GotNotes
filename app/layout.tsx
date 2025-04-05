@@ -37,7 +37,7 @@ export default function RootLayout({
           name="twitter:card"
           content="GotNotes? - Answering the infamous question"
         />
-        <meta name="twitter:title" content="GotNotes?" />
+        <meta name="twitter:title" content="GotNotes" />
         <meta
           name="twitter:description"
           content="Answering the infamous question every college student asks each semester. Got Notes?"
